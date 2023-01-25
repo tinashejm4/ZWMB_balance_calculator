@@ -175,7 +175,7 @@ def calculate_outbr_balance():
         errors.append(report[1])
         paths.append(report[2])
     result_packer(messages,errors,paths,outbr_balance_calculator)
-    switch_frame(outbr_balance_calculator,results_frame)
+    switch_frame(outbr_balance_calculator,results_frame) 
 
 def calculate_inbr_statement():
     report   = to_inbr_statement_calculator(start_path,main_payments.get(),extra_payments.get(),in_duplum.get(),user_name,statement_type.get())
