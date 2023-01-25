@@ -34,8 +34,7 @@ main_payments            = IntVar(inbr_stament_maker,1)
 extra_payments           = IntVar()
 in_duplum                = IntVar(inbr_stament_maker,1)
 only_expired             = IntVar(inbr_stament_maker,1)
-
-
+#Change path here
 start_path               = "C:\\Users\\Tinashe.Muwikwa\\Dropbox\\"
 p                        = (os.getcwd().replace('\\','\\')+"\\Dropbox\\").split("\\")
 full_name                = p[2].split(".")
