@@ -17,10 +17,6 @@ def to_out_br_statement(final_date, file_path,save_path,path,frequency,product_i
         print('loan not found')
         return ("Loan not found",False,'')
     tenure,interest_amount,principal_amount,interest_rate,all_payment_dates,payments,penalty_rate,paid_off,disbursement_date = get_data_1(data,loan_index)
-    
-    # if (paid_off == 1):
-    #     print('statement not available')
-    #     return ("Statement Cannot be reproduced",False,'')
     payment_dates = get_payment_dates(disbursement_date,all_payment_dates,final_date)
     usd_payments = payments
     # IF SOLAR LIGHT, GET PAYMENTS FROM FILE....LOADING FILE
@@ -79,13 +75,24 @@ def get_last_month_date(month, year):
         next_year += 1
     return (datetime.date(next_year,next_month,1)-(datetime.date(1900,1,1))).days
 
-def to_inbr_statement_calculator(start_path,main_payments,extra_payments,in_duplum_rule,user_name,statement_type):
+def to_inbr_statement_calculator(start_path,main_payments,extra_payments,in_duplum_rule,user_name,statement_type, account_id):
     if statement_type==0:
         reset_rates()
     else:
         load_rates(start_path)
-    data_path            = get_personal_path(start_path+"Payoffs\\Statements\\",user_name)+"a_inputs\\input.csv"
-    data                 = load_file(data_path)
+    if account_id:
+        try:
+            data_path            = (start_path+"Payoffs\\Statements\\sources\\")+"loans_list.csv"
+            all_data                 = load_file(data_path)
+            acc = "'{}".format(account_id).strip()
+            loan_index = (all_data.index[all_data['Loan Account']==acc].tolist()[0])
+            data = all_data[loan_index:loan_index+1]
+        except:
+            print("Loan details not found.")
+            return (["Loan details not found."],[False],[""])
+    else:
+        data_path            = get_personal_path(start_path+"Payoffs\\Statements\\",user_name)+"a_inputs\\input.csv"
+        data                 = load_file(data_path)
     final_date           = ((datetime.date.today())-(datetime.date(1900,1,1))).days+1
     main_payments_path   = start_path+"Payoffs\\Statements\\sources\\"
     extra_payments_path  = get_personal_path((start_path+"Payoffs\\Statements\\"),user_name)+"a_inputs\\"
@@ -104,10 +111,8 @@ def to_inbr_statement_calculator(start_path,main_payments,extra_payments,in_dupl
     if extra_payments:
         extra   = load_file(extra_payments_path+'extra_payments.csv')
     for loan_index in range(len(data.axes[0])):
-        
         account_id,tenure,interest_amount,principal_amount,interest_rate,penalty_rate,disbursement_date,zwl_loan_amount, grace_period = get_data_2(data,loan_index)
         zwl_payments , payment_dates = download_payments_from_file(payments_data,extra,account_id)
-        print(zwl_payments)
         usd_payments = [0]*len(zwl_payments)
         payment_dates = normalise_dates(payment_dates)
         statement = create_statement(tenure,interest_amount,principal_amount,interest_rate,payment_dates,usd_payments,zwl_payments,penalty_rate,disbursement_date,0,final_date, grace_period, in_duplum_rule)
