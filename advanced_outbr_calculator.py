@@ -328,7 +328,6 @@ def get_outbr_balances(data,final_date, path, product_prefix):
         tenure,interest_amount,principal_amount,interest_rate,all_payment_dates,payments,penalty_rate,paid_off,disbursement_date = collect_information(data, row)
         due_dates = get_dates_due(disbursement_date,final_date,tenure, False,True)
 
-        
         payment_dates = (get_payment_dates(disbursement_date,all_payment_dates,final_date))
         
         if product_prefix == "sl-":
@@ -415,12 +414,6 @@ def dataframe_to_xlsx(df,wb,sheet,start_row,start_col):
         for c_idx, value in enumerate(row, 1):
             current_sheet.cell(row=r_idx+start_row, column=c_idx+start_col, value=value)
     return wb
-
-# def get_sl_payments(path,loan_index):
-#     file_path = path+"payments.csv"
-#     df = pd.read_csv(file_path)
-#     paid_off = int(df.iloc[[loan_index],3])
-#     rates_dates =normalise_dates(df["Dates"].tolist())
 
 def download_payments_from_file(payments_data,extra,account_id):
     payments = []

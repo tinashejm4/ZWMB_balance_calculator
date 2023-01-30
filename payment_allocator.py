@@ -177,14 +177,13 @@ def arranged_payments(data, last_run_date, path):
 def get_final_date(month,year):
     return ((datetime.date(year,month+1,1)-datetime.timedelta(1))-(datetime.date(1900,1,1))).days+1
 
-def allocate_payment(month,year,start_path):
+def allocate_payment(currency, month,year,start_path):
     # start_path = "C:\\Users\\Tinashe.Muwikwa\\Dropbox\\"
-
-    currency = 1
-    if currency==0:
+    print(currency)
+    if currency=="USD":
         file_path = start_path + "Outside loans\\Income\\Payments\\all_payments.csv"
         save_path = start_path + "Outside loans\\Income\\Payments\\arranged_payment.csv"
-    else:
+    elif currency=="ZWL":
         file_path = start_path + "Outside loans\\Income\\Payments\\all_payments_rtgs.csv"
         save_path = start_path + "Outside loans\\Income\\Payments\\arranged_payment_rtgs.csv"
     data          = load_file(file_path)

@@ -194,11 +194,11 @@ def calculate_inbr_statement():
     result_packer(messages,errors,paths,inbr_stament_maker)
     switch_frame(inbr_stament_maker,results_frame)
 
-def to_income_allocator(month,year):
+def to_income_allocator(month,year,currency):
     messages            = []
     errors              = []
     paths               = []
-    report = allocate_payment(month=month, year=int(year), start_path=start_path)
+    report = allocate_payment(currency, month=month, year=int(year), start_path=start_path)
     messages.append(report[0])
     errors.append(report[1])
     paths.append(report[2])
@@ -442,6 +442,7 @@ def income_allocator_packer():
     Label(income_allocator,text = "Income Allocator",bg = bg_color, fg = fg_color, font=("Arial", 14)).grid(column = 1, row=0,pady=5)
     
     months = ["January","February","March","April","May","June","July","August","September","October","November","December"]
+    
     current_year = datetime.date.today().year
     current_month = datetime.date.today().month
     years   = [x for x in range(current_year,2019-1,-1)]
@@ -449,6 +450,10 @@ def income_allocator_packer():
     chosen_month.set(months[current_month-1])
     chosen_year = StringVar()
     chosen_year.set(str(current_year))
+    currencies = ["USD","ZWL"]
+    
+    chosen_currency = StringVar()
+    chosen_currency.set(currencies[0])
   
     Label(income_allocator,text = "Choose Month",bg = bg_color, fg = fg_color, font=("Arial", 9)).grid(column = 0, row=2,pady=5)
   
@@ -464,10 +469,22 @@ def income_allocator_packer():
     year_drop.config(width = 10, bg = bg_color, fg = fg_color,activebackground=mid_color)
     year_drop.grid(row = 3, column = 2)
     
+    Label(income_allocator,text = " ",bg = bg_color, fg = fg_color, font=("Arial", 9)).grid(column = 0, row=4,pady=5)
+    
+    
+    Label(income_allocator,text = "Change Currency ",bg = bg_color, fg = fg_color, font=("Arial", 9)).grid(column = 0, row=5,pady=5)
+    
+    currency_drop = OptionMenu( income_allocator , chosen_currency , *currencies )
+    currency_drop.config(width = 10, bg = bg_color, fg = fg_color,activebackground=mid_color)
+    currency_drop.grid(row = 5, column = 2)
+    
+    Label(income_allocator,text = " ",bg = bg_color, fg = fg_color, font=("Arial", 9)).grid(column = 0, row=6,pady=5)
+    
+
     back_btn = Button(income_allocator, text = 'Back', width=10,fg = fg_color, bd=0, height=2,bg=mid_color,activebackground=mid_color,command =lambda: switch_frame(income_allocator,opener))
-    back_btn.grid(row = 4, column = 0, padx=4, pady=4)
-    calc_btn = Button(income_allocator, text = 'Calculate', width=10,fg = fg_color, bd=0, height=2,bg=mid_color,activebackground=mid_color,command = lambda: to_income_allocator(months.index(chosen_month.get())+1,chosen_year.get()))
-    calc_btn.grid(row = 4, column = 2, padx=4, pady=4)
+    back_btn.grid(row = 7, column = 0, padx=4, pady=4)
+    calc_btn = Button(income_allocator, text = 'Calculate', width=10,fg = fg_color, bd=0, height=2,bg=mid_color,activebackground=mid_color,command = lambda: to_income_allocator(months.index(chosen_month.get())+1,chosen_year.get(),chosen_currency.get()))
+    calc_btn.grid(row = 7, column = 2, padx=4, pady=4)
 
 def settings_packer():
     Label(settings_frame,text = "Income Allocator",bg = bg_color, fg = fg_color, font=("Arial", 14)).grid(column = 1, row=0,pady=5)
