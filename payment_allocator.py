@@ -5,7 +5,6 @@ from advanced_outbr_calculator import (dates_in_month,get_dates_due,datify,load_
 from redirect import get_last_month_date
 import datetime
 import pandas as pd
-import numpy as np
 
 def load_information(data,index):
     loan_id              = (data.iloc[[index],1]).values[0]
@@ -178,8 +177,6 @@ def get_final_date(month,year):
     return ((datetime.date(year,month+1,1)-datetime.timedelta(1))-(datetime.date(1900,1,1))).days+1
 
 def allocate_payment(currency, month,year,start_path):
-    # start_path = "C:\\Users\\Tinashe.Muwikwa\\Dropbox\\"
-    print(currency)
     if currency=="USD":
         file_path = start_path + "Outside loans\\Income\\Payments\\all_payments.csv"
         save_path = start_path + "Outside loans\\Income\\Payments\\arranged_payment.csv"
@@ -193,5 +190,4 @@ def allocate_payment(currency, month,year,start_path):
     d             = arranged_payments(data, final_date, start_path)
     final_df      = pd.DataFrame(d,columns =['DATE', 'CLIENT NAME', 'PRODUCT','INITIAL COST PRICE', 'REVALUED PRICE','EXPECTED PAYMENT','DEPOSIT',
                                 'LOAN CAPITAL','INSURANCE', 'ADMINISTRATION','INTEREST','PENALTY INTEREST', "TOTAL PAID","BALANCE TD"])
-
     return (save_data(final_df,save_path,"PAYMENTS"))

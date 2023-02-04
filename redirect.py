@@ -149,13 +149,14 @@ def unbundle_data(data,index):
     penalty_rate       = (data.iloc[[index],12]).values[0]
     disbursement_date  = normalise_dates((data.iloc[[index],13]).values)[0]
     grace_period       = (data.iloc[[index],14]).values[0]
+    paid_off           = (data.iloc[[index],15]).values[0]
     principal_amount   = loan_amount/(tenure-grace_period)
     if (grace_period>0) or instalment==0:
         interest_amount = (instalment-loan_amount)/tenure
         instalment = loan_amount/(tenure-grace_period)+(loan_amount*intrest_rate)
     else:
         interest_amount = instalment - principal_amount
-    return (account_id,account_name,loan_amount,out_princ,out_interest,out_bal,instalment,arrears,due_dates,ref,tenure,intrest_rate,penalty_rate,
+    return (account_id,account_name,paid_off,out_princ,out_interest,out_bal,instalment,arrears,due_dates,ref,tenure,intrest_rate,penalty_rate,
             disbursement_date,grace_period,principal_amount,interest_amount)
 
 def get_current_month():
@@ -175,12 +176,12 @@ def get_inbr_balances(source_data,payments_data,final_date, in_duplum , loan_boo
     for row in range(len(source_data.index)):
     # for i in range(1):
     #     row = 253
-        (account_id,account_name,loan_amount,out_princ,out_interest,out_bal,instalment,arrears,arrear_due_days,ref,tenure,
+        (account_id,account_name,paid_up,out_princ,out_interest,out_bal,instalment,arrears,arrear_due_days,ref,tenure,
         intrest_rate,penalty_rate,disbursement_date,grace_period,principal_amount,interest_amount) = unbundle_data(source_data,row)
         due_dates                  = get_dates_due(disbursement_date,final_date,tenure, False,True)
         payments,payment_dates     = download_payments_from_file(payments_data,pd.DataFrame(),account_id)
         payment_dates              = normalise_dates(payment_dates)
-        if disbursement_date>final_date:
+        if disbursement_date>final_date or paid_up == 1:
             l        = format_data(account_id,account_name,0,0,0,0,0,instalment,0,0,"a",loan_book_format)+[0]
         elif disbursement_date+30.2*(tenure+1)>final_date and only_expired==1:
             l        = format_data(account_id,account_name,0,out_interest,0,out_princ,out_bal,instalment,arrears,arrear_due_days,ref,loan_book_format)+[0]
@@ -189,9 +190,9 @@ def get_inbr_balances(source_data,payments_data,final_date, in_duplum , loan_boo
             l        = format_data(account_id,account_name,balances[0],balances[1],balances[2],balances[3],balances[4],instalment,0,arrear_due_days,ref,loan_book_format)+[1]
         all.append(l)
     if loan_book_format:
-        columns = ['Account id', 'Account Name', 'Outstanding Principal','Interest in Arrears', 'Outstanding Balance',"Installment amount","Arrears Amount","Due days", "ref","Inrerst after maturity"]
+        columns = ['Account id', 'Account Name', 'Outstanding Principal','Interest in Arrears', 'Outstanding Balance',"Installment amount","Arrears Amount","Due days", "ref","Interest after maturity"]
     else:
-        columns = ['Account id', 'Account Name', 'Penalty Balance','Interest in Arrears', 'Principal in arrears','Loan Balance', 'Outstanding Balance @{}'.format(datify(int(final_date-1)))]
+        columns = ['Account id', 'Account Name', 'Penalty Balance','Interest in Arrears', 'Principal in arrears','Loan Balance', 'Outstanding Balance @{}'.format(datify(int(final_date-1))),"Interest after maturity"]
     return pd.DataFrame(all,columns =columns)
 
 def to_inbr_balance_calculator(start_path,final_date,user_name,in_duplum,loan_book_format,currency,only_expired):

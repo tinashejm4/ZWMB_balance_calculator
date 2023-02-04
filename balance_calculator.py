@@ -471,7 +471,6 @@ def income_allocator_packer():
     
     Label(income_allocator,text = " ",bg = bg_color, fg = fg_color, font=("Arial", 9)).grid(column = 0, row=4,pady=5)
     
-    
     Label(income_allocator,text = "Change Currency ",bg = bg_color, fg = fg_color, font=("Arial", 9)).grid(column = 0, row=5,pady=5)
     
     currency_drop = OptionMenu( income_allocator , chosen_currency , *currencies )
@@ -479,7 +478,6 @@ def income_allocator_packer():
     currency_drop.grid(row = 5, column = 2)
     
     Label(income_allocator,text = " ",bg = bg_color, fg = fg_color, font=("Arial", 9)).grid(column = 0, row=6,pady=5)
-    
 
     back_btn = Button(income_allocator, text = 'Back', width=10,fg = fg_color, bd=0, height=2,bg=mid_color,activebackground=mid_color,command =lambda: switch_frame(income_allocator,opener))
     back_btn.grid(row = 7, column = 0, padx=4, pady=4)
