@@ -118,9 +118,9 @@ def calculate_balances(type,tenure,interest_amount,principal_amount,penalty_rate
             if in_duplum_rule and t>=tenure*2:
                 if in_duplum:
                     new_interest_amount = 0
-                elif intrest_balance[-1]+new_interest_amount >= principal_balance_2[-1]:
+                elif penalty_balance[-1]+intrest_balance[-1]+new_interest_amount >= principal_balance_2[-1]:
                     in_duplum = True
-                    new_interest_amount = max(principal_balance_2[-1]-intrest_balance[-1],0)
+                    new_interest_amount = max(principal_balance_2[-1]-penalty_balance[-1]-intrest_balance[-1],0)
             #-------------------------------------------------------------------------------------------------
             
             total_interest +=new_interest_amount
@@ -154,6 +154,15 @@ def calculate_balances(type,tenure,interest_amount,principal_amount,penalty_rate
             if t>grace_period*2:
                 new_penalty = (principal_balance_1[-1]+intrest_balance[-1]+penalty_balance[-1])*penalty_rate
             
+            #Delete this part
+            #---------------------------------------------------------------------------------------
+            if in_duplum_rule:
+                if in_duplum:
+                    new_penalty = 0
+                elif penalty_balance[-1]+intrest_balance[-1]+new_penalty >= principal_balance_2[-1]:
+                    in_duplum = True
+                    new_penalty = principal_balance_2[-1]-penalty_balance[-1]-intrest_balance[-1]
+            #---------------------------------------------------------------------------------------
             total_penalty += new_penalty
             new_penalty_balance =  penalty_balance[-1]+new_penalty
             penalty_added.append(new_penalty)
@@ -359,8 +368,9 @@ def get_outbr_balances(data,final_date, path, product_prefix):
                                 'Loan Balance', 'Outstanding Balance @{}'.format(datify(int(final_date-1)))])
     return new_balances
 
-def create_statement(tenure,interest_amount,principal_amount,interest_rate,payment_dates,usd_payments,zwl_payments,penalty_rate,disbursement_date,frequency, final_date,grace_period,in_duplum_rule,statement_type):
+def create_statement(tenure,interest_amount,principal_amount,interest_rate,payment_dates,usd_payments,zwl_payments,penalty_rate,disbursement_date,frequency, final_date,grace_period,in_duplum_rule):
     due_dates = get_dates_due(disbursement_date,final_date,tenure, True,True)
+    
 
     (dates,penalty_added,intrest_added,principal_added,penalty_balance,intrest_balance,principal_balance_1,principal_balance_2,loan_payment,
             loan_payment_zwl,exc_rate,payment_to_penalty,payment_to_interest,payment_to_principal,excess_payments) = calculate_balances(1,tenure,interest_amount,principal_amount,penalty_rate,payment_dates,usd_payments,zwl_payments,interest_rate,due_dates,grace_period,in_duplum_rule)
@@ -383,70 +393,22 @@ def create_statement(tenure,interest_amount,principal_amount,interest_rate,payme
         else:
             continue
         dates_index.append(dates[i])
+        entries.append([description,dr,cr,penalty_balance[i],intrest_balance[i],principal_balance_1[i],principal_balance_2[i],
+                    loan_payment_zwl[i],exc_rate[i],loan_payment[i],payment_to_penalty[i],payment_to_interest[i],payment_to_principal[i],
+                    excess_payments[i]])
+    new_balances = pd.DataFrame(entries,columns =['Description', 'DR', 'CR','Penalty balance', 'Interest Balance',
+                                'Principal Balance', 'Loan Balance','Payment (ZWL)', 'Exchange Rate','Usd Payments', "Penalty Payment",
+                                "Interest Payment","Principal Payment", "Extra"],index=dates_index)
+    return new_balances
 
-        current_penalty,current_interest,current_capital = 0, 0, 0
-        if description == "Interest Due":
-            current_interest = dr
-            pass
-        elif description == "Principal Due":
-            current_capital = dr
-            pass
-        elif description == "Penalty Due":
-            current_penalty = dr
-
-        closing_balance = penalty_balance[i]+intrest_balance[i]+principal_balance_2[i]
-        arrears_balance = penalty_balance[i]+intrest_balance[i]+principal_balance_1[i]
-        
-        if statement_type == 1:
-            entries.append([description,dr,cr,current_penalty,current_interest,current_capital,loan_payment_zwl[i],exc_rate[i],loan_payment[i],payment_to_penalty[i],payment_to_interest[i],payment_to_principal[i],
-            excess_payments[i],penalty_balance[i],intrest_balance[i],principal_balance_1[i],principal_balance_2[i],arrears_balance,closing_balance])
-        elif statement_type == 0 or statement_type ==2:
-            entries.append([description,dr,cr,current_penalty,current_interest,current_capital,payment_to_penalty[i],payment_to_interest[i],payment_to_principal[i],
-            excess_payments[i],penalty_balance[i],intrest_balance[i],principal_balance_1[i],principal_balance_2[i],arrears_balance,closing_balance])
-
-    if statement_type == 1:
-        columns = ['Description', 'DR', 'CR',"Current Penalty","Current Interest","Current Capital","Repayments ZWL","Exchange Rate","Repayments USD","Penalty Payment","Interest Payment",
-                   "Principal Payment", "Extra",'Cumulative unpaid Penalty', 'Cumulative unpaid Interest','Cumulative unpaid Principal',
-                   'Outstanding Principal',"Arrears Balance","Closing Balance"]
-    else:
-        columns = ['Description', 'DR', 'CR',"Current Penalty","Current Interest","Current Capital","Penalty Payment","Interest Payment",
-                   "Principal Payment", "Extra",'Cumulative unpaid Penalty', 'Cumulative unpaid Interest','Cumulative unpaid Principal',
-                   'Outstanding Principal',"Arrears Balance","Closing Balance"]
-    return pd.DataFrame(entries,columns = columns,index=dates_index)
-
-def get_information(name,tenure,loan_amount,interest_amount,principal_amount,interest_rate,final_date,payments,penalty_rate,convert,outstanding_balance,grace_period,statement_type):
+def get_information(name,tenure,zwl_loan_amount,interest_amount,principal_amount,interest_rate,final_date,payments,penalty_rate,convert,outstanding_balance,grace_period):
     last_rate = 0
     if convert:
         last_rate = rates[-1]
-    if statement_type == 0:
-        new_loan_amount = loan_amount
-        s_type = "ZWL"
-    elif statement_type == 2:
-        s_type = "USD"
-        new_loan_amount = (principal_amount*(tenure-grace_period))
-    elif statement_type == 1:
-        s_type = "INDEXED"
-        return {
-        "Statement Date": (datify(final_date-1)),
+    return {"Statement Date": (datify(final_date-1)),
         "Client Name": (name),
-        "Statement Type": s_type,
-        "Loan amount ZWL":(loan_amount),
-        "Loan amount USD":(principal_amount*(tenure-grace_period)),
-        "Tenure": (tenure),
-        "Instalment USD": (principal_amount+interest_amount),
-        "Instalment Principal USD" : (round(principal_amount*100)/100),
-        "Instalment Interest USD": (round(interest_amount*100)/100),
-        "Interest Rate":(interest_rate),
-        "Penalty Rate":(penalty_rate),
-        "Total repayments":(sum(payments)),
-        "Outstanding balance USD":(outstanding_balance),
-        "Current Rate":(last_rate),
-        "Outstanding balance ZWL":(outstanding_balance*last_rate)}
-    return {
-        "Statement Date": (datify(final_date-1)),
-        "Client Name": (name),
-        "Statement Type": s_type,
-        "Loan amount":(new_loan_amount),
+        "Loan amount ZWL":(zwl_loan_amount),
+        "Loan amount USD": (principal_amount*(tenure-grace_period)),
         "Tenure": (tenure),
         "Instalment": (principal_amount+interest_amount),
         "Instalment Principal" : (round(principal_amount*100)/100),
@@ -454,9 +416,9 @@ def get_information(name,tenure,loan_amount,interest_amount,principal_amount,int
         "Interest Rate":(interest_rate),
         "Penalty Rate":(penalty_rate),
         "Total repayments":(sum(payments)),
-        "Outstanding balance":(outstanding_balance)}
-        # "Current Rate":(last_rate),
-        # "Outstanding balance ZWL":(outstanding_balance*last_rate)}
+        "Outstanding balance USD":(outstanding_balance),
+        "Current Rate":(last_rate),
+        "Outstanding balance ZWL":(outstanding_balance*last_rate)}
 
 def add_details(info_dict,wb,sheet):
     current_sheet = wb[sheet]

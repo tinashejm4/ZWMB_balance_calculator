@@ -81,73 +81,62 @@ def get_path(product):
         save_path = "Outside loans\\Assets\\Balances\\Assets_balances.csv"
         path      = "Outside loans\\Assets\\Balances\\"
         id_prefix = 'as-'
-        currency  = 1
 
     elif product ==2:
         file_path = "Outside loans\\Bakeries\\Balances\\Bakeries_USD.csv"
         save_path = "Outside loans\\Bakeries\\Balances\\Bakeries_USD_balances.csv"
         path      = "Outside loans\\Bakeries\\Balances\\"
         id_prefix = 'bk-u-'
-        currency  = 1
-
 
     elif product ==3:
         file_path = "Outside loans\\Bakeries\\Balances\\Bakeries_RTGS.csv"
         save_path = "Outside loans\\Bakeries\\Balances\\Bakeries_RTGS_balances.csv"
         path      = "Outside loans\\Bakeries\\Balances\\"
         id_prefix = 'bk-'
-        currency  = 0
 
     elif product ==4:
         file_path = "Outside loans\\Detergents\\Balances\\Detergents_USD.csv"
         save_path = "Outside loans\\Detergents\\Balances\\Detergents_USD_balances.csv"
         path = "Outside loans\\Detergents\\Balances\\"
         id_prefix = 'dt-u-'
-        currency  = 1
-        
+
     elif product ==5:
         file_path = "Outside loans\\Detergents\\Balances\\Detergents_RTGS.csv"
         save_path = "Outside loans\\Detergents\\Balances\\Detergents_RTGS_balances.csv"
         path      = "Outside loans\\Detergents\\Balances\\"
         id_prefix = 'dt-'
-        currency  = 0
-        
+
     elif product ==6:
         file_path = "Outside loans\\MicroVendor\\Balances\\MicroVendor_USD.csv"
         save_path = "Outside loans\\MicroVendor\\Balances\\MicroVendor_USD_balances.csv"
         path      = "Outside loans\\MicroVendor\\Balances\\"
         id_prefix = 'mv-u-'
-        currency  = 1
-        
+
     elif product ==7:
         file_path = "Outside loans\\MicroVendor\\Balances\\MicroVendor_RTGS.csv"
         save_path = "Outside loans\\MicroVendor\\Balances\\MicroVendor_RTGS_balances.csv"
         path      = "Outside loans\\MicroVendor\\Balances\\"
         id_prefix = 'mv-'
-        currency  = 0
         
     elif product ==8:
         file_path = "Outside loans\\Value Chains\\Balances\\Value_chain.csv"
         save_path = "Outside loans\\Value Chains\\Balances\\Value_Chain_balances.csv"
         path      = "Outside loans\\Value Chains\\Balances\\"
         id_prefix = 'vc-u-'
-        currency  = 1
         
     elif product ==9:
         file_path = "Outside loans\\Foliar\\Balances\\Foliar_fertilisers_usd.csv"
         save_path = "Outside loans\\Foliar\\Balances\\Foliar_fertilisers_balances_usd.csv"
         path      = "Outside loans\\Foliar\\Balances\\"
         id_prefix = 'fl-u-'
-        currency  = 1
 
     elif product ==10:
         file_path = "Outside loans\\Solar Lights\\Balances\\Solar.csv"
         save_path = "Outside loans\\Solar Lights\\Balances\\Solar_balances.csv"
         path      = "Outside loans\\Solar Lights\\Balances\\"
         id_prefix = 'sl-'
-        currency  = 1
 
-    return (start_path+file_path,start_path+save_path, start_path+path, frequency, id_prefix, currency)
+    return (start_path+file_path,start_path+save_path, start_path+path, frequency, id_prefix)
 
 def calculate_outbr_statement():
     messages       = []
@@ -157,9 +146,9 @@ def calculate_outbr_statement():
         final_date = (get_last_day() - datetime.date(1900,1,1)).days+1
     else:
         final_date = (datetime.date.today() - datetime.date(1900,1,1)).days+1
-    file_path,save_path,path,frequency,id_prefix,currency = get_path(int(product_choice.get()))
+    file_path,save_path,path,frequency,id_prefix = get_path(int(product_choice.get()))
     product_id = id_prefix+str(acc_id.get())
-    report = to_out_br_statement(final_date,file_path,save_path,path,frequency,product_id,start_path,id_prefix,currency)
+    report = to_out_br_statement(final_date,file_path,save_path,path,frequency,product_id,start_path,id_prefix)
     messages.append(report[0])
     errors.append(report[1])
     paths.append(report[2])
@@ -193,14 +182,14 @@ def calculate_outbr_balance(len_values):
         return
     if int(product_choice.get())==len_values:
         for i in range(1,len_values):
-            file_path,save_path,path,frequency,_id_prefix,currency = get_path((i))
+            file_path,save_path,path,frequency,_id_prefix = get_path((i))
             product_id = _id_prefix
             report = to_out_br_balance(this_final_date,file_path,save_path,path,_id_prefix)
             messages.append(report[0])
             errors.append(report[1])
             paths.append(report[2])
     else:
-        file_path,save_path,path,frequency,_id_prefix,currency = get_path(int(product_choice.get()))
+        file_path,save_path,path,frequency,_id_prefix = get_path(int(product_choice.get()))
         product_id = _id_prefix
         report = to_out_br_balance(this_final_date,file_path,save_path,path,product_id)
         messages.append(report[0])
@@ -291,7 +280,7 @@ def opener_packer():
     exit_btn = Button(opener, text = 'Exit',width=10,fg = fg_color, bd=0, height=2,bg=mid_color,activebackground=mid_color_dark,command = root.destroy)
     exit_btn.grid(row = 10, column = 2, padx=4,pady=4)
     
-    Label(opener,text = "Version 1.3",bg = bg_color, fg = fg_color).grid(row = 12, column = 2, padx=4,pady=4)
+    Label(opener,text = "Version 1.2",bg = bg_color, fg = fg_color).grid(row = 12, column = 2, padx=4,pady=4)
 
 def outbr_stament_maker_packer():
     heading = Label(outbr_stament_maker,text = "OUTBR Statement",bg = bg_color, fg = fg_color, font=("Arial", 11))
@@ -398,7 +387,7 @@ def inbr_stament_maker_packer():
     type.grid(column = 1, row=5, pady=5)
     
     Radiobutton(inbr_stament_maker, text = "ZWL Statement", variable = statement_type,value = 0,fg = fg_color, bg = bg_color,activebackground=mid_color).grid(column=0, row=6, sticky="w")
-    Radiobutton(inbr_stament_maker, text = "Indexed Statement", variable = statement_type,value = 1,fg = fg_color, bg = bg_color,activebackground=mid_color).grid(column=2, row=6, sticky="w")
+    Radiobutton(inbr_stament_maker, text = "USD Statement (Indexed)", variable = statement_type,value = 1,fg = fg_color, bg = bg_color,activebackground=mid_color).grid(column=2, row=6, sticky="w")
     
     Checkbutton(inbr_stament_maker, text="Apply In Duplum Rule", variable=in_duplum,bg = bg_color, fg = fg_color,activebackground=mid_color).grid(row=7, column = 1)
     
@@ -411,7 +400,7 @@ def inbr_balance_calculator_packer():
     heading = Label(inbr_balance_calculator,text = "INBR Balance Calculator",bg = bg_color, fg = fg_color, font=("Arial", 11))
     heading.grid(column = 1, row=0, pady=5)
     
-    format = Label(inbr_balance_calculator,text = "Choose Output format",bg = bg_color, fg = fg_color, font=("Arial", 9))
+    format = Label(inbr_balance_calculator,text = "Choose Outout format",bg = bg_color, fg = fg_color, font=("Arial", 9))
     format.grid(column = 1, row=1, pady=5)
     
     Radiobutton(inbr_balance_calculator, text = "Loan Book Format", variable = data_format,value = 1,fg = fg_color, bg = bg_color,activebackground=mid_color).grid(column=0, row=4, sticky="w")

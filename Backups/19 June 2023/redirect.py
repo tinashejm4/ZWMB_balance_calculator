@@ -8,7 +8,7 @@ import os
 def get_name(data,i):
     return (data.iloc[[i],2]).values[0]
 
-def to_out_br_statement(final_date, file_path,save_path,path,frequency,product_id,start_path,product_prefix,currency):
+def to_out_br_statement(final_date, file_path,save_path,path,frequency,product_id,start_path,product_prefix):
     data     = load_file(file_path)
     loan_id  = product_id
     try:
@@ -28,17 +28,12 @@ def to_out_br_statement(final_date, file_path,save_path,path,frequency,product_i
         usd_payments  = sl_payments[0]
     zwl_payments = [0]*len(payments)
     
-    if currency == 1:
-        statement_type = 2
-        wb = load_workbook(start_path+"Payoffs\\Statements\\sources\\"+'template_usd.xlsx')
-    elif currency==0:
-        statement_type = 0
-        wb = load_workbook(start_path+"Payoffs\\Statements\\sources\\"+'template_zwl.xlsx')
-    statement           = create_statement(tenure,interest_amount,principal_amount,interest_rate,payment_dates,usd_payments,zwl_payments,penalty_rate,disbursement_date,frequency,final_date,grace_period,True,statement_type)
+    statement           = create_statement(tenure,interest_amount,principal_amount,interest_rate,payment_dates,usd_payments,zwl_payments,penalty_rate,disbursement_date,frequency,final_date,grace_period,True)
     tail                = statement.tail(1)
-    outstanding_balance =(tail['Closing Balance']).values[0]
-    info_dict           = get_information(get_name(data,loan_index),tenure,0,interest_amount,principal_amount,interest_rate,final_date,payments,penalty_rate,False,outstanding_balance,grace_period,statement_type)
+    outstanding_balance =(tail['Penalty balance']+tail['Interest Balance']+tail['Loan Balance']).values[0]
+    info_dict           = get_information(get_name(data,loan_index),tenure,0,interest_amount,principal_amount,interest_rate,final_date,payments,penalty_rate,False,outstanding_balance,grace_period)
     file_name           = get_name(data,loan_index)
+    wb                  = load_workbook(start_path+"Payoffs\\Statements\\sources\\"+'template.xlsx')
     wb                  = dataframe_to_xlsx(statement,wb,"statement",15,0)
     wb                  = dataframe_to_xlsx(simplify_statement(statement),wb,"simplified",14,1)
     wb                  = add_details(info_dict,wb,"statement")
@@ -61,9 +56,9 @@ def simplify_statement(statement):
     repayments = statement[['Description','Penalty Payment', 'Interest Payment','Principal Payment']].copy()
     new_st = new_st[new_st["Description"] != "Principal Due"]
     repayments = repayments[repayments["Description"] != "Principal Due"]
-    loan_amount = statement["Closing Balance"][0]
+    loan_amount = statement["Loan Balance"][0]
     payments  = repayments.sum(axis = 'columns', numeric_only=True)
-
+    
     new_st["CR"]=(list(payments))
     balance = [loan_amount]
     for dr,cr in zip(new_st["DR"],payments):
@@ -81,24 +76,17 @@ def get_last_month_date(month, year):
     return (datetime.date(next_year,next_month,1)-(datetime.date(1900,1,1))).days
 
 def to_inbr_statement_calculator(start_path,main_payments,extra_payments,in_duplum_rule,user_name,statement_type, account_id):
-    if statement_type == 0:
+    if statement_type==0:
         data_path   = (start_path+"Payoffs\\Statements\\sources\\")+"loans_list.csv"
         reset_rates()
-        wb   = load_workbook(start_path+"Payoffs\\Statements\\sources\\template_zwl.xlsx")
-        statement_start_row = 15
-        simplified_statement_start_row = 14
-        
     elif statement_type == 1:
         data_path   = (start_path+"Payoffs\\Statements\\sources\\")+"loans_list_usd.csv"
         load_rates(start_path)
-        wb   = load_workbook(start_path+"Payoffs\\Statements\\sources\\template_indexed.xlsx")
-        statement_start_row = 18
-        simplified_statement_start_row = 17
-        
     if account_id:
         all_data                 = load_file(data_path)
         acc = "'{}".format(account_id).strip()
         try:
+
             loan_index = (all_data.index[all_data['Loan Account']==acc].tolist()[0])
             data = all_data[loan_index:loan_index+1]
         except:
@@ -117,7 +105,6 @@ def to_inbr_statement_calculator(start_path,main_payments,extra_payments,in_dupl
     frames               = []
     payments_data        = pd.DataFrame()
     extra = pd.DataFrame()
-    
     if main_payments:
         for year in range(2019,to_year+1):
             frames.append(load_file(main_payments_path+"{}.csv".format(year)))
@@ -130,15 +117,16 @@ def to_inbr_statement_calculator(start_path,main_payments,extra_payments,in_dupl
         zwl_payments , payment_dates = download_payments_from_file(payments_data,extra,account_id)
         usd_payments = [0]*len(zwl_payments)
         payment_dates = normalise_dates(payment_dates)
-        statement = create_statement(tenure,interest_amount,principal_amount,interest_rate,payment_dates,usd_payments,zwl_payments,penalty_rate,disbursement_date,0,final_date, grace_period, in_duplum_rule,statement_type)
+        statement = create_statement(tenure,interest_amount,principal_amount,interest_rate,payment_dates,usd_payments,zwl_payments,penalty_rate,disbursement_date,0,final_date, grace_period, in_duplum_rule)
         tail = statement.tail(1)
-        outstanding_balance =(tail['Closing Balance']).values[0]
-        info_dict = get_information(data.iloc[[loan_index],1].values[0],tenure,zwl_loan_amount,interest_amount,principal_amount,interest_rate,final_date,zwl_payments,penalty_rate,True,outstanding_balance,grace_period,statement_type)
+        outstanding_balance =(tail['Penalty balance']+tail['Interest Balance']+tail['Loan Balance']).values[0]
+        info_dict = get_information(data.iloc[[loan_index],1].values[0],tenure,zwl_loan_amount,interest_amount,principal_amount,interest_rate,final_date,zwl_payments,penalty_rate,True,outstanding_balance,grace_period)
         month     = get_current_month()
         path = get_personal_path(get_personal_path(start_path+"Payoffs\\Statements\\",user_name),month)
         name = (data.iloc[[loan_index],1]).values[0]
-        wb   = dataframe_to_xlsx(statement,wb,'statement',statement_start_row,0)
-        wb   = dataframe_to_xlsx(simplify_statement(statement),wb,"simplified",simplified_statement_start_row,1)
+        wb   = load_workbook(start_path+"Payoffs\\Statements\\sources\\template.xlsx")
+        wb   = dataframe_to_xlsx(statement,wb,'statement',15,0)
+        wb   = dataframe_to_xlsx(simplify_statement(statement),wb,"simplified",14,1)
         wb   = add_details(info_dict,wb,"statement")
         save_path = path+"{}.xlsx".format(name)
         report = save_xlsx(wb,save_path,name)
